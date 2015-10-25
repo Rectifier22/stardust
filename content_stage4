@@ -1,0 +1,70 @@
+import os
+import jinja2
+import webapp2
+import cgi
+
+from google.appengine.api import users
+from google.appengine.ext import ndb
+
+#from urlparse import urlparse
+
+from content_stage4 import COURSES
+
+#import urllib
+
+template_dir = os.path.join(os.path.dirname(__file__), 'html_templates')
+jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
+
+
+
+class Handler(webapp2.RequestHandler):
+    def write(self, *a, **kw):
+        self.response.out.write(*a, **kw)
+
+    def render_str(self, template, **params):
+        t = jinja_env.get_template(template)
+        return t.render(params)
+
+    def render(self, template, **kw):
+        self.write(self.render_str(template, courses=COURSES, **kw))    
+
+class MainPage(Handler):
+    def get(self):
+        #items = self.request.get_all("food")
+        #self.render("shopping_list.html", items = items)
+        self.render("/main_page.html", page_name="home")
+
+class NotesHandler(Handler):
+    def get(self):
+        self.render('notes.html', page_name="notes")
+
+class CourseHandler(Handler):
+    def get(self, course_number):
+        self.render('course.html', course_number=int(course_number), course=COURSES[int(course_number)-1], page_name="notes")
+
+class CommentsHandler(Handler):
+    def get(self):
+        self.render('comments.html', page_name="comments")
+
+
+
+
+
+
+
+
+
+class FizzBuzzHandler(Handler):
+    def get(self):
+        n = self.request.get('n',0)
+        n = n and int(n)
+        self.render('fizzbuzz.html', n = n)
+
+    
+app = webapp2.WSGIApplication([
+    ('/*', MainPage),
+    ('/notes.html', NotesHandler), 
+    (r'/course/(\d+)/', CourseHandler), 
+    ('/comments.html', CommentsHandler),
+    ('/fizzbuzz', FizzBuzzHandler)
+], debug=True)
